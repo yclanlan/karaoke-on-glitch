@@ -112,6 +112,9 @@ function setupEnvironment() {
   myDirectionalLight.lookAt(0, 0, 0);
   scene.add(myDirectionalLight);
   myDirectionalLight.castShadow = true;
+  
+  // add a background image
+  
 }
 
 function loop() {
