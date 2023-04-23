@@ -11,10 +11,9 @@ const server = app.listen(8080);
 console.log("Server is running on http://localhost:8080");
 
 
-// Create database
+// Create a database and load it into memory using 'nedb'
 let Datastore = require('nedb');
 let db = new Datastore({ filename: './database.db' });
-
 db.loadDatabase();
 
 /////SOCKET.IO///////
