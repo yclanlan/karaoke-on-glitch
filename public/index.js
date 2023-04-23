@@ -43,8 +43,14 @@ function init() {
   setupEnvironment();
   establishWebsocketConnection();
   setupRaycastInteraction();
+  addInteractionOne();
+  addInteractionTwo();
 
   loop();
+}
+
+function addInteractionOne(){
+   document.addEventListener('keydown', (ev)w)
 }
 
 function establishWebsocketConnection() {
@@ -112,9 +118,19 @@ function setupEnvironment() {
   myDirectionalLight.lookAt(0, 0, 0);
   scene.add(myDirectionalLight);
   myDirectionalLight.castShadow = true;
-  
+
   // add a background image
-  
+  const urls = [
+    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/px.png?v=1682288791769",
+    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/nx.png?v=1682288790985",
+    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/py.png?v=1682288790299",
+    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/ny.png?v=1682288789340",
+    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/pz.png?v=1682288788572",
+    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/nz.png?v=1682288787827",
+  ];
+
+  const textureCube = new THREE.CubeTextureLoader().load(urls);
+  scene.background = textureCube;
 }
 
 function loop() {
