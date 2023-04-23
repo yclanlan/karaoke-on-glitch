@@ -43,15 +43,11 @@ function init() {
   setupEnvironment();
   establishWebsocketConnection();
   setupRaycastInteraction();
-  addInteractionOne();
-  addInteractionTwo();
 
   loop();
 }
 
-function addInteractionOne(){
-   document.addEventListener('keydown', (ev)w)
-}
+
 
 function establishWebsocketConnection() {
   socket = io();
