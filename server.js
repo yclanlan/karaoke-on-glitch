@@ -15,6 +15,7 @@ console.log("Server is running on http://localhost:8080");
 let Datastore = require('nedb');
 let db = new Datastore({ filename: './database.db' });
 db.loadDatabase();
+con
 
 /////SOCKET.IO///////
 const io = require("socket.io")().listen(server);
@@ -35,7 +36,9 @@ io.on("connection", (socket) => {
     console.log("Got message from client with id ", socket.id, ":", data);
     let messageWithId = { from: socket.id, data: data };
     socket.broadcast.emit("msg", messageWithId);
-    db.insert(messageWithId);
+    db.insert(messageWithId, (err, doc) => {
+      console.log('newdoc:',doc)
+    });
   });
 
   socket.on("disconnect", () => {
