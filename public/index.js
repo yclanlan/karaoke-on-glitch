@@ -11,6 +11,12 @@ let ground;
 let mouse;
 let socket; // create a global socket object
 
+let pointerDown = false; // keep track of whether the mouse pointer is down
+let shiftDown = false;
+
+let controls;
+
+
 function init() {
   // create a scene in which all other objects will exist
   scene = new THREE.Scene();
@@ -38,7 +44,7 @@ function init() {
   ground.receiveShadow = true;
 
   // add orbit controls
-  let controls = new OrbitControls(camera, renderer.domElement);
+  controls = new OrbitControls(camera, renderer.domElement);
 
   setupEnvironment();
   establishWebsocketConnection();
@@ -46,8 +52,6 @@ function init() {
 
   loop();
 }
-
-
 
 function establishWebsocketConnection() {
   socket = io();
@@ -70,34 +74,56 @@ function establishWebsocketConnection() {
 
 function setupRaycastInteraction() {
   mouse = new THREE.Vector2(0, 0);
+
+  // create a geometry and material which we'll reuse for each newly created mesh
+  let geo = new THREE.IcosahedronGeometry(0.25, 0);
+  let mat = new THREE.MeshPhongMaterial({ color: "red" });
+
   document.addEventListener(
-    "mousemove",
+    "pointermove",
     (ev) => {
       // three.js expects 'normalized device coordinates' (i.e. between -1 and 1 on both axes)
       mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
+
+      if (pointerDown && shiftDown) {
+        raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObject(ground);
+
+        if (intersects.length) {
+          let point = intersects[0].point;
+          console.log(point);
+          socket.emit("msg", point);
+
+          // add our own
+          let mesh = new THREE.Mesh(geo, mat);
+          scene.add(mesh);
+          mesh.position.set(point.x, point.y, point.z);
+          mesh.castShadow = true;
+        }
+      }
     },
     false
   );
 
   let raycaster = new THREE.Raycaster();
-  document.addEventListener("click", (ev) => {
-    raycaster.setFromCamera(mouse, camera);
-
-    const intersects = raycaster.intersectObject(ground);
-
-    if (intersects.length) {
-      let point = intersects[0].point;
-      console.log(point);
-      socket.emit("msg", point);
-
-      // add our own
-      let geo = new THREE.IcosahedronGeometry(0.25, 0);
-      let mat = new THREE.MeshPhongMaterial({ color: "red" });
-      let mesh = new THREE.Mesh(geo, mat);
-      scene.add(mesh);
-      mesh.position.set(point.x, point.y, point.z);
-      mesh.castShadow = true;
+  document.addEventListener("pointerdown", (ev) => {
+    pointerDown = true;
+  });
+  document.addEventListener("pointerup", (ev) => {
+    pointerDown = false;
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key == "Shift") {
+      shiftDown = true;
+      controls.enabled = false;
+    }
+  });
+  document.addEventListener("keyup", (ev) => {
+    if (ev.key == "Shift") {
+      shiftDown = false;
+      controls.enabled = true;
     }
   });
 }

@@ -10,6 +10,13 @@ const http = require("http").createServer(app);
 const server = app.listen(8080);
 console.log("Server is running on http://localhost:8080");
 
+
+// Create database
+let Datastore = require('nedb');
+let db = new Datastore({ filename: './database.db' });
+
+db.loadDatabase();
+
 /////SOCKET.IO///////
 const io = require("socket.io")().listen(server);
 
@@ -29,6 +36,7 @@ io.on("connection", (socket) => {
     console.log("Got message from client with id ", socket.id, ":", data);
     let messageWithId = { from: socket.id, data: data };
     socket.broadcast.emit("msg", messageWithId);
+    db.insert(messageWithId);
   });
 
   socket.on("disconnect", () => {
@@ -38,22 +46,3 @@ io.on("connection", (socket) => {
 });
 
 
-// Create database
-let Datastore = require('nedb');
-let db = new Datastore({ filename: './database.db' });
-
-db.loadDatabase();
-var doc = { hello: 'world'
-               , n: 5
-               , today: new Date()
-               , nedbIsAwesome: true
-               , notthere: null
-               , notToBeSaved: undefined  // Will not be saved
-               , fruits: [ 'apple', 'orange', 'pear' ]
-               , infos: { name: 'nedb' }
-               };
- 
-db.insert(doc, function (err, newDoc) {   // Callback is optional
-  // newDoc is the newly inserted document, including its _id
-  // newDoc has no key called notToBeSaved since its value was undefined
-});
