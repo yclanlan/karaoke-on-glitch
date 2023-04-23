@@ -10,12 +10,13 @@ const http = require("http").createServer(app);
 const server = app.listen(8080);
 console.log("Server is running on http://localhost:8080");
 
-
 // Create a database and load it into memory using 'nedb'
-let Datastore = require('nedb');
-let db = new Datastore({ filename: './database.db' });
+let Datastore = require("nedb");
+let db = new Datastore({ filename: "./database.db" });
 db.loadDatabase();
-con
+db.find({}, function (err, docs) {
+  console.log("# of database entries:", docs.length);
+});
 
 /////SOCKET.IO///////
 const io = require("socket.io")().listen(server);
@@ -27,6 +28,14 @@ io.on("connection", (socket) => {
     "Someone joined our server using socket.io.  Their socket id is",
     socket.id
   );
+  db.find({}, function (err, docs) {
+    console.log(
+      "Sending",
+      docs.length,
+      "existing database entries to new client"
+    );
+    socket.emit('existing', docs);
+  });
 
   peers[socket.id] = {};
 
@@ -37,7 +46,7 @@ io.on("connection", (socket) => {
     let messageWithId = { from: socket.id, data: data };
     socket.broadcast.emit("msg", messageWithId);
     db.insert(messageWithId, (err, doc) => {
-      console.log('newdoc:',doc)
+      console.log("newdoc:", doc);
     });
   });
 
@@ -46,5 +55,3 @@ io.on("connection", (socket) => {
     delete peers[socket.id];
   });
 });
-
-

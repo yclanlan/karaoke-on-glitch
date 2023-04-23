@@ -16,7 +16,6 @@ let shiftDown = false;
 
 let controls;
 
-
 function init() {
   // create a scene in which all other objects will exist
   scene = new THREE.Scene();
@@ -63,15 +62,27 @@ function establishWebsocketConnection() {
       "and data:",
       msg.data
     );
-    let geo = new THREE.IcosahedronGeometry(0.25, 0);
-    let mat = new THREE.MeshPhongMaterial({ color: "blue" });
-    let mesh = new THREE.Mesh(geo, mat);
-    scene.add(mesh);
-    mesh.position.set(msg.data.x, msg.data.y, msg.data.z);
-    mesh.castShadow = true;
+    addOtherPersonsDrawing(msg.data.x, msg.data.y, msg.data.z);
+  });
+
+  socket.on("existing", (arrayOfMessages) => {
+    console.log(arrayOfMessages);
+    for (let i = 0; i < arrayOfMessages.length; i++) {
+      let msg = arrayOfMessages[i];
+      addOtherPersonsDrawing(msg.data.x, msg.data.y, msg.data.z);
+    }
   });
 }
 
+// we'll reuse the geometry and material, so make them global
+let geo = new THREE.IcosahedronGeometry(0.25, 0);
+let mat = new THREE.MeshPhongMaterial({ color: "blue" });
+function addOtherPersonsDrawing(x, y, z) {
+  let mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+}
 function setupRaycastInteraction() {
   mouse = new THREE.Vector2(0, 0);
 
