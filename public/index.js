@@ -64,14 +64,6 @@ function establishWebsocketConnection() {
     );
     addOtherPersonsDrawing(msg.data.x, msg.data.y, msg.data.z);
   });
-
-  socket.on("existing", (arrayOfMessages) => {
-    console.log(arrayOfMessages);
-    for (let i = 0; i < arrayOfMessages.length; i++) {
-      let msg = arrayOfMessages[i];
-      addOtherPersonsDrawing(msg.data.x, msg.data.y, msg.data.z);
-    }
-  });
 }
 
 // we'll reuse the geometry and material, so make them global
@@ -83,6 +75,8 @@ function addOtherPersonsDrawing(x, y, z) {
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
 }
+
+// set up the raycaster and keyboard controls
 function setupRaycastInteraction() {
   mouse = new THREE.Vector2(0, 0);
 
