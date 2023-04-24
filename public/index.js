@@ -67,7 +67,7 @@ function establishWebsocketConnection() {
 }
 
 // we'll reuse the geometry and material, so make them global
-let geo = new THREE.IcosahedronGeometry(0.25, 0);
+let geo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
 let mat = new THREE.MeshPhongMaterial({ color: "blue" });
 function addOtherPersonsDrawing(x, y, z) {
   let mesh = new THREE.Mesh(geo, mat);
