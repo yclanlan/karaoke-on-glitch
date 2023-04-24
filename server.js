@@ -18,6 +18,12 @@ db.find({}, function (err, docs) {
   console.log("# of database entries:", docs.length);
 });
 
+// uncomment to delete all docs
+db.remove({}, { multi: true }, function (err, numRemoved) {
+  console.log("Removing",numRemoved,"database entries!");
+});
+
+
 /////SOCKET.IO///////
 const io = require("socket.io")().listen(server);
 
@@ -34,7 +40,7 @@ io.on("connection", (socket) => {
       docs.length,
       "existing database entries to new client"
     );
-    socket.emit('existing', docs);
+    socket.emit("existing", docs);
   });
 
   peers[socket.id] = {};
