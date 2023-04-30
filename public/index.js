@@ -1,168 +1,224 @@
-/*
-This example sets up a simple three.js scene which connects to a websocket server.
+import { MyScene } from "./scene.js";
 
-*/
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+// socket.io
+let mySocket;
 
-let scene, camera, renderer;
+// array of connected peers
+let peers = {};
 
-let ground;
-let mouse;
-let socket; // create a global socket object
+// Variable to store our three.js scene:
+let myScene;
 
-let pointerDown = false; // keep track of whether the mouse pointer is down
-let shiftDown = false;
+// Our local media stream (i.e. webcam and microphone stream)
+let localMediaStream = null;
 
-let controls;
+////////////////////////////////////////////////////////////////////////////////
+// Start-Up Sequence:
+////////////////////////////////////////////////////////////////////////////////
 
-function init() {
-  // create a scene in which all other objects will exist
-  scene = new THREE.Scene();
+window.onload = async () => {
+  console.log("Window loaded.");
 
-  // create a camera and position it in space
-  let aspect = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-  camera.position.z = 5; // place the camera in space
-  camera.position.y = 5;
-  camera.lookAt(0, 0, 0);
+  // first get user media
+  try {
+    localMediaStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+  } catch (err) {
+    console.warn("Failed to get user media!");
+    console.warn(err);
+  }
 
-  // the renderer will actually show the camera view within our <canvas>
-  renderer = new THREE.WebGLRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  createLocalVideoElement();
 
-  // add shadows
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+  //  create the threejs scene
+  console.log("Creating three.js scene...");
+  myScene = new MyScene();
 
-  let groundGeo = new THREE.BoxGeometry(10, 1, 10);
-  let groundMat = new THREE.MeshPhongMaterial({ color: "yellow" });
-  ground = new THREE.Mesh(groundGeo, groundMat);
-  scene.add(ground);
-  ground.receiveShadow = true;
-
-  // add orbit controls
-  controls = new OrbitControls(camera, renderer.domElement);
-
-  setupEnvironment();
+  // finally create the websocket connection
   establishWebsocketConnection();
-  setupRaycastInteraction();
 
-  loop();
-}
+  // start sending position data to the server
+  setInterval(() => {
+    mySocket.emit("move", myScene.getPlayerPosition());
+  }, 200);
+};
 
+////////////////////////////////////////////////////////////////////////////////
+// Socket.io Connections
+////////////////////////////////////////////////////////////////////////////////
+
+// establishes socket connection
 function establishWebsocketConnection() {
-  socket = io();
+  mySocket = io();
 
-  socket.on("msg", (msg) => {
-    console.log(
-      "Got a message from friend with ID ",
-      msg.from,
-      "and data:",
-      msg.data
-    );
-    addOtherPersonsDrawing(msg.data.x, msg.data.y, msg.data.z);
+  mySocket.on("connect", () => {
+    console.log("My socket ID is", mySocket.id);
   });
-}
 
-// we'll reuse the geometry and material, so make them global
-let geo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-let mat = new THREE.MeshPhongMaterial({ color: "blue" });
-function addOtherPersonsDrawing(x, y, z) {
-  let mesh = new THREE.Mesh(geo, mat);
-  scene.add(mesh);
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-}
+  mySocket.on("introduction", (peerInfo) => {
+    for (let theirId in peerInfo) {
+      console.log("Adding client with id " + theirId);
+      peers[theirId] = {};
 
-// set up the raycaster and keyboard controls
-function setupRaycastInteraction() {
-  mouse = new THREE.Vector2(0, 0);
+      let pc = createPeerConnection(theirId, true);
+      peers[theirId].peerConnection = pc;
 
-  // create a geometry and material which we'll reuse for each newly created mesh
-  let geo = new THREE.IcosahedronGeometry(0.25, 0);
-  let mat = new THREE.MeshPhongMaterial({ color: "red" });
-
-  document.addEventListener(
-    "pointermove",
-    (ev) => {
-      // three.js expects 'normalized device coordinates' (i.e. between -1 and 1 on both axes)
-      mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
-
-      if (pointerDown && shiftDown) {
-        raycaster.setFromCamera(mouse, camera);
-
-        const intersects = raycaster.intersectObject(ground);
-
-        if (intersects.length) {
-          let point = intersects[0].point;
-          console.log(point);
-          socket.emit("msg", point);
-
-          // add our own
-          let mesh = new THREE.Mesh(geo, mat);
-          scene.add(mesh);
-          mesh.position.set(point.x, point.y, point.z);
-          mesh.castShadow = true;
-        }
-      }
-    },
-    false
-  );
-
-  let raycaster = new THREE.Raycaster();
-  document.addEventListener("pointerdown", (ev) => {
-    pointerDown = true;
-  });
-  document.addEventListener("pointerup", (ev) => {
-    pointerDown = false;
-  });
-  document.addEventListener("keydown", (ev) => {
-    if (ev.key == "Shift") {
-      shiftDown = true;
-      controls.enabled = false;
+      addPeerMediaElements(theirId);
+      myScene.addPeerAvatar(theirId);
     }
   });
-  document.addEventListener("keyup", (ev) => {
-    if (ev.key == "Shift") {
-      shiftDown = false;
-      controls.enabled = true;
+
+  // when a new user has entered the server
+  mySocket.on("newPeerConnected", (theirId) => {
+    if (theirId != mySocket.id && !(theirId in peers)) {
+      console.log("A new user connected with the ID: " + theirId);
+
+      console.log("Adding client with id " + theirId);
+      peers[theirId] = {};
+      addPeerMediaElements(theirId);
+      myScene.addPeerAvatar(theirId);
     }
+  });
+
+  mySocket.on("peerDisconnected", (_id) => {
+    // Update the data from the server
+
+    if (_id != mySocket.id) {
+      console.log("A user disconnected with the id: " + _id);
+      myScene.removePeerAvatar(_id);
+      removePeerMediaElements(_id);
+      delete peers[_id];
+    }
+  });
+
+  mySocket.on("signal", (to, from, data) => {
+    // to should be us
+    if (to != mySocket.id) {
+      console.log("Socket IDs don't match");
+    }
+
+    // Look for the right peer connection
+    let peer = peers[from];
+    if (peer.peerConnection) {
+      peer.peerConnection.signal(data);
+    } else {
+      // Let's create it then, we won't be the "initiator"
+      let peerConnection = createPeerConnection(from, false);
+
+      peers[from].peerConnection = peerConnection;
+
+      // forward the new simplepeer that signal
+      peerConnection.signal(data);
+    }
+  });
+
+  // Update when one of the users moves in space
+  mySocket.on("peers", (peerInfoFromServer) => {
+    // remove my info from the incoming data
+    delete peerInfoFromServer[mySocket.id];
+    myScene.updatePeerAvatars(peerInfoFromServer);
   });
 }
 
-function setupEnvironment() {
-  //add a light
-  let myColor = new THREE.Color(0xffaabb);
-  let ambientLight = new THREE.AmbientLight(myColor, 0.5);
-  scene.add(ambientLight);
+////////////////////////////////////////////////////////////////////////////////
+// SimplePeer WebRTC Connections
+////////////////////////////////////////////////////////////////////////////////
 
-  // add a directional light
-  let myDirectionalLight = new THREE.DirectionalLight(myColor, 0.85);
-  myDirectionalLight.position.set(-5, 3, -5);
-  myDirectionalLight.lookAt(0, 0, 0);
-  scene.add(myDirectionalLight);
-  myDirectionalLight.castShadow = true;
+// this function sets up a peer connection and corresponding DOM elements for a specific client
+function createPeerConnection(theirSocketId, isInitiator = false) {
+  console.log("Connecting to peer with ID", theirSocketId);
+  console.log("initiating?", isInitiator);
 
-  // add a background image
-  const urls = [
-    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/px.png?v=1682288791769",
-    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/nx.png?v=1682288790985",
-    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/py.png?v=1682288790299",
-    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/ny.png?v=1682288789340",
-    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/pz.png?v=1682288788572",
-    "https://cdn.glitch.global/91a61221-6cce-42c2-b580-f4b04e3ad87a/nz.png?v=1682288787827",
-  ];
+  let peerConnection = new SimplePeer({ initiator: isInitiator });
+  // simplepeer generates signals which need to be sent across socket
+  peerConnection.on("signal", (data) => {
+    mySocket.emit("signal", theirSocketId, mySocket.id, data);
+  });
 
-  const textureCube = new THREE.CubeTextureLoader().load(urls);
-  scene.background = textureCube;
+  // When we have a connection, send our stream
+  peerConnection.on("connect", () => {
+    peerConnection.addStream(localMediaStream);
+  });
+
+  // Stream coming in to us
+  peerConnection.on("stream", (stream) => {
+    updatePeerMediaElements(theirSocketId, stream);
+  });
+
+  peerConnection.on("close", () => {
+    console.log("Got close event");
+  });
+
+  peerConnection.on("error", (err) => {
+    console.log(err);
+  });
+
+  return peerConnection;
 }
 
-function loop() {
-  renderer.render(scene, camera);
-  window.requestAnimationFrame(loop);
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+// Media DOM Elements
+
+function createLocalVideoElement() {
+  const videoElement = document.createElement("video");
+  videoElement.id = "local_video";
+  videoElement.autoplay = true;
+  videoElement.width = 100;
+  videoElement.hidden= true;
+
+  if (localMediaStream) {
+    let videoStream = new MediaStream([localMediaStream.getVideoTracks()[0]]);
+    videoElement.srcObject = videoStream;
+  }
+  // document.body.appendChild(videoElement);
 }
 
-init();
+function addPeerMediaElements(_id) {
+  // console.log("Adding media element for peer with id: " + _id);
+
+  let videoElement = document.createElement("video");
+  videoElement.id = _id + "_video";
+  videoElement.autoplay = true;
+  videoElement.style = "visibility: hidden;";
+
+  document.body.appendChild(videoElement);
+
+  // create audio element for peer
+  let audioEl = document.createElement("audio");
+  audioEl.setAttribute("id", _id + "_audio");
+  audioEl.controls = "controls";
+  audioEl.volume = 1;
+  audioEl.hidden= true;
+  document.body.appendChild(audioEl);
+
+  audioEl.addEventListener("loadeddata", () => {
+    audioEl.play();
+  });
+}
+
+function updatePeerMediaElements(_id, stream) {
+  console.log("Updatings media element for peer with id: " + _id);
+
+  let videoStream = new MediaStream([stream.getVideoTracks()[0]]);
+  let audioStream = new MediaStream([stream.getAudioTracks()[0]]);
+
+  const videoElement = document.getElementById(_id + "_video");
+  videoElement.srcObject = videoStream;
+
+  let audioEl = document.getElementById(_id + "_audio");
+  audioEl.srcObject = audioStream;
+}
+
+function removePeerMediaElements(_id) {
+  console.log("Removing media element for peer with id: " + _id);
+
+  let videoEl = document.getElementById(_id + "_video");
+  if (videoEl != null) {
+    videoEl.remove();
+  }
+}
+
+
