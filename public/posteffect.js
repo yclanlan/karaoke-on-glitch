@@ -49,10 +49,11 @@
 				controls.minDistance = 1;
 				controls.maxDistance = 10;
 
-				// scene.add( new THREE.AmbientLight( 0x404040 ) );
+				scene.add( new THREE.AmbientLight( 0x404040 ) );
 
-				// const pointLight = new THREE.PointLight( 0xffffff, 1 );
-				// camera.add( pointLight );
+				const pointLight = new THREE.PointLight( 0xffffff, 1 );
+        //add light to camera!
+				camera.add( pointLight );
 
 				const renderScene = new RenderPass( scene, camera );
 
