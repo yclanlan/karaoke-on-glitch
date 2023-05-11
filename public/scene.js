@@ -137,7 +137,7 @@ export class MyScene {
     this.discoCenterGroup.position.set(-5,4,0);
 
     this.loader = new GLTFLoader();
-    this.loader.load( './sceneObject/disco_ball_animated/scene2.glb',
+    this.loader.load( 'https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/scene2.glb?v=1683844928106',
 
      ( object ) => {
       // console.log(object);
@@ -183,7 +183,7 @@ export class MyScene {
     this.furnitureCenterGroup.position.set(0,2.3,-3);
 
     this.loader2 = new GLTFLoader();
-    this.loader2.load( './sceneObject/room_furnishings/ktv.glb',
+    this.loader2.load( 'https://cdn.glitch.me/72668bd8-abcf-446c-b0e6-727278e90ffe/ktv.glb?v=1683844745996',
      ( object ) => {
       
       let model= object.scene;
@@ -201,7 +201,7 @@ export class MyScene {
       ////////////////// background //////////////////
 
       this.backgroundSceneGroup= new THREE.Group();
-      this.backgroundSceneTexture = new THREE.TextureLoader().load( "./karaoke.jpg" );
+      this.backgroundSceneTexture = new THREE.TextureLoader().load( "https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/karaoke.jpg?v=1683845018861" );
       this.backgroundSceneMaterial = new THREE.MeshStandardMaterial( {
         map: this.backgroundSceneTexture,         
         side: THREE.DoubleSide, 
