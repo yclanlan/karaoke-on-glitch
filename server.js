@@ -10,6 +10,14 @@ const http = require("http").createServer(app);
 const server = app.listen(8080);
 console.log("Server is running on http://localhost:8080");
 
+let currentSong = {
+  name: null,
+  startTime: null
+}
+
+
+
+
 /////SOCKET.IO///////
 const io = require("socket.io")().listen(server);
 
@@ -26,6 +34,29 @@ io.on("connection", (socket) => {
 
   // tell other clients that a new peer joined
   io.emit("newPeerConnected", socket.id);
+
+  //
+  if(!currentSong.name){
+    console.log("First user");
+    socket.emit("askToPlay");
+
+  }else{
+    console.log("Not first user, sending current song info");
+    socket.emit("sendCurrentSong", currentSong);
+    console.log(currentSong)
+  }
+  
+  socket.on("playSong",(songName)=>{ // play 或是切歌
+    // update currentSong
+    currentSong = {
+      name: songName,
+      startTime: new Date().getTime()
+    }
+    console.log(songName);
+    socket.broadcast.emit("sendCurrentSong",currentSong);
+    // socket.emit("sendCurrentSong",currentSong);
+  })
+  // socket.emit("sendCurrentSong", currentSong);
 
   peers[socket.id] = {
     position: [0, 0.5, 0],
@@ -61,10 +92,18 @@ io.on("connection", (socket) => {
     io.sockets.emit("peerDisconnected", socket.id);
 
     delete peers[socket.id];
+
+    if(Object.keys(peers).length<1){
+      console.log('no one is here anymore');
+      currentSong = {
+        name: null,
+        startTime: null
+      }
+    }
   });
 });
 
 // update all clients with peer data every 100 milliseconds (around 10 times per second)
 setInterval(() => {
   io.sockets.emit("peers", peers);
-}, 100);
+}, 10);
