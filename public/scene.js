@@ -460,7 +460,7 @@ export class MyScene {
           this.avatars[id].group.position
         );
 
-        if (distSquared > 500) {
+        if (distSquared > 800) {
           audioEl.volume = 0;
         } else {
           // https://discourse.threejs.org/t/positionalaudio-setmediastreamsource-with-webrtc-question-not-hearing-any-sound/14301/29
@@ -511,7 +511,7 @@ export class MyScene {
 
     this.discoCenterGroup.rotation.y = this.frameCount/2;
     // update client volumes every 25 frames
-    if (this.frameCount % 25 === 0) {
+    if (this.frameCount % 20 === 0) {
       this.updateClientVolumes();
 
       this.myDirectionalLight1.intensity = 1*Math.random();
