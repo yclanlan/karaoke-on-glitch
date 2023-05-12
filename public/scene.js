@@ -380,7 +380,7 @@ export class MyScene {
     this.scene.add(group);
 
     let loader4 = new GLTFLoader();
-    loader4.load( './sceneObject/micphone.glb',
+    loader4.load( 'https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/micphone.glb?v=1683866869394',
       ( object ) => {
       
       let head= object.scene;
