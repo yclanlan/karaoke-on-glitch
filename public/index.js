@@ -71,7 +71,8 @@ function establishWebsocketConnection() {
 
     mySocket.on("sendCurrentSong",(currentSong)=>{
       //
-      console.log('receive song data')
+      console.log('receive song data');
+      console.log(currentSong);
      
       //myScene.video.src = './' + currentSong.name + '.mp4';
       let videoEl = document.getElementById("video");
@@ -100,7 +101,7 @@ function establishWebsocketConnection() {
 
     myScene.gui.onChange(()=>{
       
-        let songName = myScene.gui.children[1].object.currentSong;
+        let songName = myScene.gui.children[0].object.currentSong;
         console.log(songName);
         mySocket.emit("playSong",songName);
     }) ;

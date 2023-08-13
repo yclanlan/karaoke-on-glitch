@@ -137,7 +137,7 @@ export class MyScene {
     this.discoCenterGroup.position.set(-5,4,0);
 
     this.loader = new GLTFLoader();
-    this.loader.load( 'https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/scene2.glb?v=1683844928106',
+    this.loader.load( './sceneObject/disco_ball_animated/scene2.glb',
 
      ( object ) => {
       // console.log(object);
@@ -183,7 +183,7 @@ export class MyScene {
     this.furnitureCenterGroup.position.set(0,2.3,-3);
 
     this.loader2 = new GLTFLoader();
-    this.loader2.load( 'https://cdn.glitch.me/72668bd8-abcf-446c-b0e6-727278e90ffe/ktv.glb?v=1683844745996',
+    this.loader2.load( './sceneObject/room_furnishings/ktv.glb',
      ( object ) => {
       
       let model= object.scene;
@@ -201,7 +201,7 @@ export class MyScene {
       ////////////////// background //////////////////
 
       this.backgroundSceneGroup= new THREE.Group();
-      this.backgroundSceneTexture = new THREE.TextureLoader().load( "https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/karaoke.jpg?v=1683845018861" );
+      this.backgroundSceneTexture = new THREE.TextureLoader().load( "./sceneObject/karaoke.jpg" );
       this.backgroundSceneMaterial = new THREE.MeshStandardMaterial( {
         map: this.backgroundSceneTexture,         
         side: THREE.DoubleSide, 
@@ -264,7 +264,7 @@ export class MyScene {
 
 
       
-      this.gui.add(this.video,'volume',0,1,0.01).name('volume');      
+      // this.gui.add(this.video,'volume',0,1,0.01).name('volume');      
       this.gui.add(
         {currentSong:''},'currentSong',
         [ "500","jay","Adele","blackpink","sodagreen"]).setValue(" Change Song ").name('track').onChange((e)=>{
@@ -274,7 +274,7 @@ export class MyScene {
         // mySocket.emit("playSong", e + '.mp4');
         // console.log(this.gui.children[0]);
         
-        console.log(this.gui.children[1].object);
+        console.log(this.gui.children[0].object);
       })
 
       // this.gui.onChange( function(value ){
@@ -380,7 +380,7 @@ export class MyScene {
     this.scene.add(group);
 
     let loader4 = new GLTFLoader();
-    loader4.load( 'https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/micphone.glb?v=1683866869394',
+    loader4.load( './sceneObject/micphone.glb',
       ( object ) => {
       
       let head= object.scene;
@@ -460,7 +460,7 @@ export class MyScene {
           this.avatars[id].group.position
         );
 
-        if (distSquared > 800) {
+        if (distSquared > 500) {
           audioEl.volume = 0;
         } else {
           // https://discourse.threejs.org/t/positionalaudio-setmediastreamsource-with-webrtc-question-not-hearing-any-sound/14301/29
@@ -511,7 +511,7 @@ export class MyScene {
 
     this.discoCenterGroup.rotation.y = this.frameCount/2;
     // update client volumes every 25 frames
-    if (this.frameCount % 20 === 0) {
+    if (this.frameCount % 25 === 0) {
       this.updateClientVolumes();
 
       this.myDirectionalLight1.intensity = 1*Math.random();
