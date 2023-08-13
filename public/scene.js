@@ -137,7 +137,7 @@ export class MyScene {
     this.discoCenterGroup.position.set(-5,4,0);
 
     this.loader = new GLTFLoader();
-    this.loader.load( './sceneObject/disco_ball_animated/scene2.glb',
+    this.loader.load( 'https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/scene2.glb',
 
      ( object ) => {
       // console.log(object);
@@ -183,7 +183,7 @@ export class MyScene {
     this.furnitureCenterGroup.position.set(0,2.3,-3);
 
     this.loader2 = new GLTFLoader();
-    this.loader2.load( './sceneObject/room_furnishings/ktv.glb',
+    this.loader2.load( 'https://cdn.glitch.me/72668bd8-abcf-446c-b0e6-727278e90ffe/ktv.glb?v=1683844745996',
      ( object ) => {
       
       let model= object.scene;
@@ -380,7 +380,7 @@ export class MyScene {
     this.scene.add(group);
 
     let loader4 = new GLTFLoader();
-    loader4.load( './sceneObject/micphone.glb',
+    loader4.load( 'https://cdn.glitch.global/72668bd8-abcf-446c-b0e6-727278e90ffe/micphone.glb?v=1683866869394',
       ( object ) => {
       
       let head= object.scene;
